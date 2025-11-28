@@ -1,0 +1,15 @@
+{
+    "folder": [
+    {
+        "srcs" : {
+            "path": "."
+        } ,
+        "includes" : {
+            "path": "."
+        }
+    }
+    ],
+
+    "rules" : [
+    ]
+}
