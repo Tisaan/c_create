@@ -17,7 +17,7 @@ interface config {
 	// overwrite toutes les autres file/folder
 }
 
-const _VERSION = "0.1.1";
+const _VERSION = "0.1.2";
 
 async function exec_command(cmd:string) {
 	let command;
