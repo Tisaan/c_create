@@ -1,15 +1,20 @@
 {
-    "folder": [
+    "folder":
     {
         "srcs" : {
-            "path": "."
+            "path": ".",
+            "file":[
+                {
+                "name": "main.c",
+                "from": "."
+            }
+        ]
         } ,
         "includes" : {
             "path": "."
         }
-    }
-    ],
+    },
 
-    "rules" : [
-    ]
+    "rules" : {
+        }
 }
