@@ -44,8 +44,20 @@ async function exec_command(cmd:string) {
 	}
 }
 
+async function open_file()
+{
+	let text;
+	if (Deno.args.length > 0)
+	{
+		text = await Deno.readTextFile(Deno.args[0]);
+	} else {
+		text = await Deno.readTextFile("scheme.json");
+	}
+	return (text);
+}
+
 async function main () {
-	const text = await Deno.readTextFile("./src/scheme.json");
+	const text = await open_file()	
 	const json: config = JSON.parse(text);
 	outerloop: for (const [name, folder] of Object.entries(json.folder)){
 		if (json.rules && json.rules[name]){
