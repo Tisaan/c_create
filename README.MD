@@ -45,6 +45,9 @@ A simple json file that create to folder `srcs` and `includes` and a `main.c` fi
 ### 0.1.1:
 - Change `folder` and `rules` structure and `rules` checking
 - Fix a bug where `file` not check for `rules`
+- 
+### 0.1.2
+- add argv[0] to be a custom scheme
 
 ## Future Changes
 - Commandline arguments
