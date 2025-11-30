@@ -16,7 +16,7 @@ The principale structure is `Config`, it contains 2 optional structure
     - **name**|`string`|: name of the file<br>&emsp;
     - **from**|`string`|: if it exist copy the folder at this location to **path**, and don't create new one<br>&emsp;
 `rules` constains:<br>&emsp;
-    - **target**|`string`|: the name of the folder/file that would be targeted by the rule,<br>&emsp;
+    - **target**|`string[]`|: a list of the name of the folder/file that would be targeted by the rule,<br>&emsp;
     - **cmd**|`string`|: a command that would be executed on the current terminal<br>&emsp;
     - **block**|`boolean`|: represent if the execution of the command would block the creation/copy of the target<br>&emsp;
 ## Example
@@ -56,7 +56,10 @@ A simple json file that create a folder `srcs` and `includes` and a `main.c` fil
 - BUG: don't match unnamed `rule` with unname `folder`/`file`
 - BUG: don't execute unspecified command
 - Change rules definion from `record<string, string>` to `rule[]`
-
+### 0.1.4
+- `rule.target` is now a `string[]`
+- `rule.block` now skip after the rule is apply for each target
+- 
 ## Future Changes
 - move rule to corresponding folder/file
 - add before/after command to exec before/after the creation/copy

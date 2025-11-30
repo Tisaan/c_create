@@ -10,19 +10,19 @@ interface folder {
 	from ?: string, // the imported files as susceptible to be overwrite by "file"
 }
 
-interface rules{
-	target: string,
+interface rule{
+	target: string[],
 	cmd: string
 	block: boolean
 }
 
 interface config {
 	folder : folder[],
-	rules ?: rules[], // si tu croise la key tu exec la value dans un term,
+	rules ?: rule[], // si tu croise la key tu exec la value dans un term,
 	// overwrite toutes les autres file/folder
 }
 
-const _VERSION = "0.1.2";
+const _VERSION = "0.1.4";
 
 async function exec_command(cmd:string) {
 	let command;
@@ -63,22 +63,28 @@ async function open_file()
 	return (text);
 }
 
+function build_rule(rules?: rule[]): Map<string, rule>{
+	const map: Map<string, rule[]> = new Map();
+	const list = new Array<rule>;
+	if (rules){
+		for (const rule of rules){
+			for (const target of rule.target){
+				map.set(target, )
+			}
+			if (rule.block)
+				continue outerloop;
+			break;
+			}
+		}
+}
+
 async function main () {
 	const text = await open_file()	
 	const json: config = JSON.parse(text);
+	const rules = build_rule(json.rules)
 	outerloop: for (const folder of json.folder){
 		const name = folder.name;
-		if (json.rules){
-			for (const rule of json.rules){
-				if (rule.target && rule.target == name)
-				{
-					await exec_command(rule.cmd);
-					if (rule.block)
-						continue outerloop;
-					break;
-				}
-			}
-		}
+		
 		const folderpath = `${folder.path}/${name}`
 		if (folder.from){
 			const fpath = `${folder.from}/${name}`;
@@ -106,11 +112,13 @@ async function main () {
 			{
 				if (json.rules){
 					for (const rule of json.rules){
-						if (rule.target == name){
-							await exec_command(rule.cmd);
-							if (rule.block)
-								continue outerloop;
-							break;
+						for (const target of rule.target){
+							if (target == name){
+								await exec_command(rule.cmd);
+								if (rule.block)
+									continue outerloop;
+								break;
+							}
 						}
 					}
 				}
