@@ -17,8 +17,9 @@ The principale structure is `Config`, it contains 2 optional structure
     - **from**|`string`|: if it exist copy the folder at this location to **path**, and don't create new one<br>&emsp;
 `rules` constains:<br>&emsp;
     - **target**|`string[]`|: a list of the name of the folder/file that would be targeted by the rule,<br>&emsp;
-    - **cmd**|`string`|: a command that would be executed on the current terminal<br>&emsp;
-    - **block**|`boolean`|: represent if the execution of the command would block the creation/copy of the target<br>&emsp;
+	- **before**|`string`|: a command is execute before the creating/copy,<br>&emsp;
+	- **after**|`string`|: a command is execute after the creating/copy,<br>&emsp;
+	- **replace**|`string`|: a command is execute replace the creating/copy,
 ## Example
 A simple json file that create a folder `srcs` and `includes` and a `main.c` file in `srcs` copied from somewhereelse: <br>
 ```json
@@ -59,10 +60,14 @@ A simple json file that create a folder `srcs` and `includes` and a `main.c` fil
 ### 0.1.4
 - `rule.target` is now a `string[]`
 - `rule.block` now skip after the rule is apply for each target
-- 
+### 0.1.5
+- move the json type structure to **structure.ts**
+- add `_rule` which is use to create a rule Hashtable
+- `rule.block` and `rule.cmd` has been removed
+- add `rule.before` and `rule.after` to exec before/after the creation/copy
+- add `rule.replace` to exec a command that replace the copy/creation
 ## Future Changes
 - move rule to corresponding folder/file
-- add before/after command to exec before/after the creation/copy
 - better Commandline arguments
 - Better output,
 - Possible logging

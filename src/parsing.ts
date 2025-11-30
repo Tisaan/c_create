@@ -1,28 +1,6 @@
-interface file {
-	name: string,
-	from: string // from where to copy them
-}
+import {rule, config, _rule} from "./structure.ts"
 
-interface folder {
-	name:string
-	path: string,
-	file ?: file[]
-	from ?: string, // the imported files as susceptible to be overwrite by "file"
-}
-
-interface rule{
-	target: string[],
-	cmd: string
-	block: boolean
-}
-
-interface config {
-	folder : folder[],
-	rules ?: rule[], // si tu croise la key tu exec la value dans un term,
-	// overwrite toutes les autres file/folder
-}
-
-const _VERSION = "0.1.4";
+const _VERSION = "0.1.5";
 
 async function exec_command(cmd:string) {
 	let command;
@@ -63,30 +41,58 @@ async function open_file()
 	return (text);
 }
 
-function build_rule(rules?: rule[]): Map<string, rule>{
-	const map: Map<string, rule[]> = new Map();
-	const list = new Array<rule>;
+function build_rule(rules?: rule[]): Map<string, _rule[]>{
+	const map: Map<string, _rule[]> = new Map();
+	let list: _rule[]|undefined;
 	if (rules){
 		for (const rule of rules){
 			for (const target of rule.target){
-				map.set(target, )
-			}
-			if (rule.block)
-				continue outerloop;
-			break;
+				list = map.get(target);
+				if (list){
+					list?.push({
+						after: rule.after,
+						replace: rule.replace,
+						before: rule.before,
+					} as _rule)
+					map.set(target, list);
+				} else {
+					list = [{
+						after: rule.after,
+						replace: rule.replace,
+						before: rule.before,
+					} as _rule]
+					map.set(target, list);
+				}
 			}
 		}
+		return map;
+	}
+	return map;
 }
 
 async function main () {
 	const text = await open_file()	
 	const json: config = JSON.parse(text);
 	const rules = build_rule(json.rules)
-	outerloop: for (const folder of json.folder){
+	for (const folder of json.folder){
 		const name = folder.name;
-		
+		let targetrules = rules.get(name);
+		//exec folder.rule.before
+		if (targetrules)
+		{
+			for (const rule of targetrules){
+				if (rule.before)
+					await exec_command(rule.before);
+			}
+		}
 		const folderpath = `${folder.path}/${name}`
-		if (folder.from){
+		//copy/create folder
+		if (targetrules){
+			for (const rule of targetrules){
+				if (rule.replace)
+					await exec_command(rule.replace);
+			}
+		} else if (folder.from){
 			const fpath = `${folder.from}/${name}`;
 			try {
 				await Deno.copyFile(fpath, folderpath);
@@ -106,24 +112,37 @@ async function main () {
 				}
 			}
 		}
+		//exec folder.rule.after
+		if (targetrules)
+		{
+			for (const rule of targetrules){
+				if (rule.after)
+					await exec_command(rule.after);
+			}
+		}
+
 		if (folder.file)
 		{
 			for (const file of folder.file)
 			{
-				if (json.rules){
-					for (const rule of json.rules){
-						for (const target of rule.target){
-							if (target == name){
-								await exec_command(rule.cmd);
-								if (rule.block)
-									continue outerloop;
-								break;
-							}
-						}
+				const path = `${name}/${file.name}`;
+				targetrules = rules.get(path);
+				//exec file.rule.before
+				if (targetrules)
+				{
+					for (const rule of targetrules){
+						if (rule.before)
+							await exec_command(rule.before);
 					}
 				}
-				const path = `${name}/${file.name}`;
-				if (file.from){
+				//replace cmd/create/copy file
+				if (targetrules)
+				{
+					for (const rule of targetrules){
+						if (rule.replace)
+							await exec_command(rule.replace);
+					}
+				} else if (file.from){
 					const fpath = `${file.from}/${file.name}`;
 					try {
 						await Deno.copyFile(fpath, path);
@@ -137,6 +156,13 @@ async function main () {
 						console.log(`File "${path}" created successfully.`);
 					} catch (error) {
 						console.error(`Error creating file "${name}":`, error);
+					}
+				}
+				//exec file.rule.after
+				if (targetrules){
+					for (const rule of targetrules){
+						if (rule.after)
+							await exec_command(rule.after);
 					}
 				}
 			}

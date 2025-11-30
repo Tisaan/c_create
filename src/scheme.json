@@ -6,7 +6,7 @@
             "file":[
                 {
                 "name": "main.c",
-                "from": "."
+                "from": "../somewhereelse"
             }
         ]
         } ,
@@ -17,9 +17,5 @@
     ],
 
     "rules" : [
-        {
-            "block": true,
-            "cmd": "echo srcs"
-        }
     ]
 }
