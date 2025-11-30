@@ -1,7 +1,7 @@
 {
-    "folder":
-    {
-        "srcs" : {
+    "folder": [
+        {
+            "name": "srcs",
             "path": ".",
             "file":[
                 {
@@ -10,11 +10,16 @@
             }
         ]
         } ,
-        "includes" : {
+        {
+            "name": "includes",
             "path": "."
         }
-    },
+    ],
 
-    "rules" : {
+    "rules" : [
+        {
+            "block": true,
+            "cmd": "echo srcs"
         }
+    ]
 }

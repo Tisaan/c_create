@@ -6,38 +6,42 @@ It require [Deno](https://Deno.com/)
 
 ## Syntax
 The principale structure is `Config`, it contains 2 optional structure
-`folder` and `rules` which are respectively *Record<string, folder>* and *Record<string, string>*, all **path** are for now relative<br>
+`folder` and `rules` which are respectively *folder[]* and *Rules[]*, all **path** are for now relative<br>
 `folder` contains:<br>&emsp;
-    - **path**: the path where the folder will be created.<br>&emsp;
-    - **from**: if it exist copy the folder at this location to **path**, and don't create new one<br>&emsp;
-    - **file**: Same to folder appart that it create/copy a file <br>
-`rules`:<br>&emsp;
-    Bind two string,
-    when the first one is encounter in the file:<br>&emsp;
-    execute the second one on the current terminal.<br>&emsp;
-    It could overwrite every rule.<br>&emsp;
-    **It is unprotected beware**<br>
+    - **name**|`string`|: name of the folder,<br>&emsp;
+    - **path**|`string`|: the path where the folder will be created.<br>&emsp;
+    - **from**|`string`|: if it exist copy the folder at this location to **path**, and don't create new one<br>&emsp;
+    - **file**|`file[]`|: list of `file` that would be the folder <br>
+`file` contains:<br>&emsp;
+    - **name**|`string`|: name of the file<br>&emsp;
+    - **from**|`string`|: if it exist copy the folder at this location to **path**, and don't create new one<br>&emsp;
+`rules` constains:<br>&emsp;
+    - **target**|`string`|: the name of the folder/file that would be targeted by the rule,<br>&emsp;
+    - **cmd**|`string`|: a command that would be executed on the current terminal<br>&emsp;
+    - **block**|`boolean`|: represent if the execution of the command would block the creation/copy of the target<br>&emsp;
 ## Example
 A simple json file that create a folder `srcs` and `includes` and a `main.c` file in `srcs` copied from somewhereelse: <br>
 ```json
 {
-    "folder":
-    {
-        "srcs" : {
+    "folder": [
+        {
+            "name": "srcs",
             "path": ".",
-            "file": [
+            "file":[
                 {
-                    "name": "main.c",
-                    "from": "../somewhereelse"
-                }
-            ]   
+                "name": "main.c",
+                "from": "../somewhereelse"
+            }
+        ]
         } ,
-        "includes" : {
+        {
+            "name": "includes",
             "path": "."
         }
-    },
+    ],
 
-    "rules" : {}
+    "rules" : [
+    ]
 }
 ```
 ## Patch-Note
@@ -48,9 +52,15 @@ A simple json file that create a folder `srcs` and `includes` and a `main.c` fil
 - Fix a bug where `file` not check for `rules`
 ### 0.1.2
 - add argv[0] to be a custom scheme
+### 0.1.3
+- BUG: don't match unnamed `rule` with unname `folder`/`file`
+- BUG: don't execute unspecified command
+- Change rules definion from `record<string, string>` to `rule[]`
 
 ## Future Changes
-- Commandline arguments
+- move rule to corresponding folder/file
+- add before/after command to exec before/after the creation/copy
+- better Commandline arguments
 - Better output,
 - Possible logging
 - enhance rules

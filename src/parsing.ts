@@ -4,16 +4,21 @@ interface file {
 }
 
 interface folder {
+	name:string
 	path: string,
 	file ?: file[]
 	from ?: string, // the imported files as susceptible to be overwrite by "file"
 }
 
-
+interface rules{
+	target: string,
+	cmd: string
+	block: boolean
+}
 
 interface config {
-	folder : Record<string, folder>,
-	rules ?: Record<string, string>, // si tu croise la key tu exec la value dans un term,
+	folder : folder[],
+	rules ?: rules[], // si tu croise la key tu exec la value dans un term,
 	// overwrite toutes les autres file/folder
 }
 
@@ -21,6 +26,8 @@ const _VERSION = "0.1.2";
 
 async function exec_command(cmd:string) {
 	let command;
+	if (!cmd)
+		return ;
 	if (Deno.build.os === "windows") {
 		command = new Deno.Command("cmd.exe", {
 			args: ["/c", cmd],
@@ -51,7 +58,7 @@ async function open_file()
 	{
 		text = await Deno.readTextFile(Deno.args[0]);
 	} else {
-		text = await Deno.readTextFile("scheme.json");
+		text = await Deno.readTextFile("./src/scheme.json");
 	}
 	return (text);
 }
@@ -59,10 +66,18 @@ async function open_file()
 async function main () {
 	const text = await open_file()	
 	const json: config = JSON.parse(text);
-	outerloop: for (const [name, folder] of Object.entries(json.folder)){
-		if (json.rules && json.rules[name]){
-				await exec_command(json.rules[name]);
-				continue outerloop;
+	outerloop: for (const folder of json.folder){
+		const name = folder.name;
+		if (json.rules){
+			for (const rule of json.rules){
+				if (rule.target && rule.target == name)
+				{
+					await exec_command(rule.cmd);
+					if (rule.block)
+						continue outerloop;
+					break;
+				}
+			}
 		}
 		const folderpath = `${folder.path}/${name}`
 		if (folder.from){
@@ -89,9 +104,15 @@ async function main () {
 		{
 			for (const file of folder.file)
 			{
-				if (json.rules && json.rules[file.name]){
-					await exec_command(json.rules[file.name]);
-					continue outerloop;
+				if (json.rules){
+					for (const rule of json.rules){
+						if (rule.target == name){
+							await exec_command(rule.cmd);
+							if (rule.block)
+								continue outerloop;
+							break;
+						}
+					}
 				}
 				const path = `${name}/${file.name}`;
 				if (file.from){
@@ -114,6 +135,5 @@ async function main () {
 		}
 	}
 }
-
 
 main()
