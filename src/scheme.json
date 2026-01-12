@@ -1,18 +1,40 @@
 {
     "folder": [
         {
-            "name": "srcs",
+            "name": "utils",
+            "path": ".",
+            "from": "~/.local/share/Trash/files/Push_swap_off/utils"
+        },
+        {
+            "name": "parsing",
             "path": ".",
             "file":[
                 {
-                "name": "main.c",
-                "from": "../somewhereelse"
+                    "name": "check.c"
+                }
+            ]
+        },
+        {
+            "name": "srcs",
+            "path": ".",
+            "file":[
+            {
+                "name": "psuh_swap.c"
+            },
+            {
+                "name": "index.c"
             }
+
         ]
         } ,
         {
             "name": "includes",
-            "path": "."
+            "path": ".",
+            "file":[
+                {
+                    "name":"push_swap.h"
+                }
+            ]
         }
     ],
 

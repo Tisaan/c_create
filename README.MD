@@ -1,40 +1,48 @@
 # C_Create
 
-## Purpose
+# Purpose
+
 C_create is a tool to create a folder hierarchy,
 It require [Deno](https://Deno.com/) 
 
 ## Syntax
 The principale structure is `Config`, it contains 2 optional structure
-`folder` and `rules` which are respectively *folder[]* and *Rules[]*, all **path** are for now relative<br>
+`folder` and `rules` which are respectively *folder[]* and *Rules[]*, all **path**are for now relative:
 `folder` contains:<br>&emsp;
     - **name**|`string`|: name of the folder,<br>&emsp;
     - **path**|`string`|: the path where the folder will be created.<br>&emsp;
-    - **from**|`string`|: if it exist copy the folder at this location to **path**, and don't create new one<br>&emsp;
-    - **file**|`file[]`|: list of `file` that would be the folder <br>
+    - **from**|`string?`|: if it exist copy the folder at this location to **path**, and don't create new one<br>&emsp;
+    - **file**|`file[]?`|: list of `file` that would be the folder <br>
+    - **folder**|`folder[]?`|: list of `folder` that would be the folder <br>
 `file` contains:<br>&emsp;
     - **name**|`string`|: name of the file<br>&emsp;
-    - **from**|`string`|: if it exist copy the folder at this location to **path**, and don't create new one<br>&emsp;
+    - **from**|`string?`|: if it exist copy the folder at this location to **path**, and don't create new one<br>&emsp;
 `rules` constains:<br>&emsp;
     - **target**|`string[]`|: a list of the name of the folder/file that would be targeted by the rule,<br>&emsp;
 	- **before**|`string`|: a command is execute before the creating/copy,<br>&emsp;
 	- **after**|`string`|: a command is execute after the creating/copy,<br>&emsp;
 	- **replace**|`string`|: a command is execute replace the creating/copy,
 ## Example
-A simple json file that create a folder `srcs` and `includes` and a `main.c` file in `srcs` copied from somewhereelse: <br>
+A simple json file that create a folder `srcs` and `includes`, a `utils` folder and a `main.c` file in `srcs` copied from '../somewhereelse': <br>
 ```json
 {
     "folder": [
         {
             "name": "srcs",
             "path": ".",
+            "folder":[
+                {
+                    "name": "foldrer",
+                    "path": "."
+                }
+            ],
             "file":[
                 {
                 "name": "main.c",
                 "from": "../somewhereelse"
-            }
-        ]
-        } ,
+                }
+            ]
+        },
         {
             "name": "includes",
             "path": "."
@@ -66,8 +74,11 @@ A simple json file that create a folder `srcs` and `includes` and a `main.c` fil
 - `rule.block` and `rule.cmd` has been removed
 - add `rule.before` and `rule.after` to exec before/after the creation/copy
 - add `rule.replace` to exec a command that replace the copy/creation
+### 0.1.6
+- allow for `folder` to be recursive by add `.folder` to the `folder` type
+- BUG: `file.from` was always expected in the type structure
 ## Future Changes
-- move rule to corresponding folder/file
+- support for TON file format
 - better Commandline arguments
 - Better output,
 - Possible logging

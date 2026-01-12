@@ -1,6 +1,6 @@
-import {rule, config, _rule} from "./structure.ts"
+import {rule, config, _rule, folder} from "./structure.ts"
 
-const _VERSION = "0.1.5";
+const _VERSION = "0.1.6";
 
 async function exec_command(cmd:string) {
 	let command;
@@ -36,7 +36,7 @@ async function open_file()
 	{
 		text = await Deno.readTextFile(Deno.args[0]);
 	} else {
-		text = await Deno.readTextFile("./src/scheme.json");
+		text = await Deno.readTextFile("scheme.json");
 	}
 	return (text);
 }
@@ -70,14 +70,12 @@ function build_rule(rules?: rule[]): Map<string, _rule[]>{
 	return map;
 }
 
-async function main () {
-	const text = await open_file()	
-	const json: config = JSON.parse(text);
-	const rules = build_rule(json.rules)
-	for (const folder of json.folder){
-		const name = folder.name;
-		let targetrules = rules.get(name);
-		//exec folder.rule.before
+async function build_file(folder: folder, rules: Map<string, _rule[]>){
+	for (const file of folder.file!)
+	{
+		const path = `${name}/${file.name}`;
+		const targetrules = rules.get(path);
+		//exec file.rule.before
 		if (targetrules)
 		{
 			for (const rule of targetrules){
@@ -85,88 +83,98 @@ async function main () {
 					await exec_command(rule.before);
 			}
 		}
-		const folderpath = `${folder.path}/${name}`
-		//copy/create folder
-		if (targetrules){
-			for (const rule of targetrules){
-				if (rule.replace)
-					await exec_command(rule.replace);
+		//replace cmd/create/copy file
+		if (targetrules)
+		{
+		for (const rule of targetrules){
+			if (rule.replace)
+				await exec_command(rule.replace);
 			}
-		} else if (folder.from){
-			const fpath = `${folder.from}/${name}`;
+		} else if (file.from){
+			const fpath = `${file.from}/${file.name}`;
 			try {
-				await Deno.copyFile(fpath, folderpath);
-				console.log(`File "${fpath}" copied to "${folderpath}" successfully.`);
+				await Deno.copyFile(fpath, path);
+				console.log(`File "${file.from}" copied to "${path}" successfully.`);
 			} catch (error) {
-				console.error(`Error copying file "${fpath}" to "${folderpath}":`, error);
+				console.error(`Error copying file "${fpath}" to "${path}":`, error);
 			}   
 		} else { 
 			try {
-				await Deno.mkdir(folderpath);
-				console.log(`Directory "${folderpath}" created successfully.`);
+				await Deno.writeTextFile(path, "");
+						console.log(`File "${path}" created successfully.`);
 			} catch (error) {
-				if (error instanceof Deno.errors.AlreadyExists) {
-					console.log(`Directory "${folderpath}" already exists.`);
-				} else {
-					console.error(`Error creating directory "${folderpath}":`, error);
-				}
+				console.error(`Error creating file "${name}":`, error);
 			}
 		}
-		//exec folder.rule.after
-		if (targetrules)
-		{
+		//exec file.rule.after
+		if (targetrules){
 			for (const rule of targetrules){
 				if (rule.after)
 					await exec_command(rule.after);
 			}
 		}
+	}
+}
 
-		if (folder.file)
-		{
-			for (const file of folder.file)
-			{
-				const path = `${name}/${file.name}`;
-				targetrules = rules.get(path);
-				//exec file.rule.before
-				if (targetrules)
-				{
-					for (const rule of targetrules){
-						if (rule.before)
-							await exec_command(rule.before);
-					}
-				}
-				//replace cmd/create/copy file
-				if (targetrules)
-				{
-					for (const rule of targetrules){
-						if (rule.replace)
-							await exec_command(rule.replace);
-					}
-				} else if (file.from){
-					const fpath = `${file.from}/${file.name}`;
-					try {
-						await Deno.copyFile(fpath, path);
-						console.log(`File "${file.from}" copied to "${path}" successfully.`);
-					} catch (error) {
-						console.error(`Error copying file "${fpath}" to "${path}":`, error);
-					}   
-				} else { 
-					try {
-						await Deno.writeTextFile(path, "");
-						console.log(`File "${path}" created successfully.`);
-					} catch (error) {
-						console.error(`Error creating file "${name}":`, error);
-					}
-				}
-				//exec file.rule.after
-				if (targetrules){
-					for (const rule of targetrules){
-						if (rule.after)
-							await exec_command(rule.after);
-					}
-				}
+async function build_folder(folder: folder, rules: Map<string, _rule[]>){
+	const name = folder.name;
+	const targetrules = rules.get(name);
+	//exec folder.rule.before
+	if (targetrules){
+		for (const rule of targetrules){
+			if (rule.before)
+				await exec_command(rule.before);
+		}
+	}
+	const folderpath = `${folder.path}/${name}`
+	//copy/create folder
+	if (targetrules){
+		for (const rule of targetrules){
+			if (rule.replace)
+				await exec_command(rule.replace);
+		}
+	} else if (folder.from){
+		const fpath = `${folder.from}/${name}`;
+		try {
+			await Deno.copyFile(fpath, folderpath);
+			console.log(`File "${fpath}" copied to "${folderpath}" successfully.`);
+		} catch (error) {
+			console.error(`Error copying file "${fpath}" to "${folderpath}":`, error);
+		}   
+	} else { 
+		try {
+			await Deno.mkdir(folderpath);
+			console.log(`Directory "${folderpath}" created successfully.`);
+		} catch (error) {
+			if (error instanceof Deno.errors.AlreadyExists) {
+				console.log(`Directory "${folderpath}" already exists.`);
+			} else {
+				console.error(`Error creating directory "${folderpath}":`, error);
 			}
 		}
+	}
+	//exec folder.rule.after
+	if (targetrules)
+	{
+		for (const rule of targetrules){
+			if (rule.after)
+				await exec_command(rule.after);
+		}
+	}
+	if (folder.folder){
+		for (const fol of folder.folder)
+			build_folder(fol, rules);
+	}
+	if (folder.file)
+		build_file(folder, rules)
+}
+
+async function main () {
+	const text = await open_file()	
+	const json: config = JSON.parse(text);
+	const rules = build_rule(json.rules)
+	for (const folder of json.folder){
+		build_folder(folder, rules);
 	}
 }
 
