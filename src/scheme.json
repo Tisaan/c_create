@@ -2,8 +2,7 @@
     "folder": [
         {
             "name": "utils",
-            "path": ".",
-            "from": "~/.local/share/Trash/files/Push_swap_off/utils"
+            "path": "."
         },
         {
             "name": "parsing",
@@ -38,6 +37,14 @@
         }
     ],
 
-    "rules" : [
-    ]
+    "rules" : {
+        "init": ["git init"],
+        "end": ["git add .", "git status"],
+        "rule": [
+            {
+                "target": "chose",
+                "before": "echo fait truc"
+            }
+        ]
+    }
 }

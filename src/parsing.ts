@@ -1,6 +1,6 @@
-import {rule, config, _rule, folder} from "./structure.ts"
+import {folder, rule, _rule, tar_rule, config } from "./structure.ts"
 
-const _VERSION = "0.1.6";
+const _VERSION = "0.1.7";
 
 async function exec_command(cmd:string) {
 	let command;
@@ -41,39 +41,56 @@ async function open_file()
 	return (text);
 }
 
-function build_rule(rules?: rule[]): Map<string, _rule[]>{
-	const map: Map<string, _rule[]> = new Map();
-	let list: _rule[]|undefined;
+function build_rule(rules?: rule): _rule{
+	const map: _rule = {
+		rule: new Map<string, tar_rule[]>()
+	};
 	if (rules){
-		for (const rule of rules){
-			for (const target of rule.target){
-				list = map.get(target);
-				if (list){
-					list?.push({
-						after: rule.after,
-						replace: rule.replace,
-						before: rule.before,
-					} as _rule)
-					map.set(target, list);
-				} else {
-					list = [{
-						after: rule.after,
-						replace: rule.replace,
-						before: rule.before,
-					} as _rule]
-					map.set(target, list);
+		const init: Array<string> = [];
+		const end: Array<string> = [];
+		if (rules.init){
+			for (const rulinit of rules.init){
+				init.push(rulinit);
+			}
+			map.init = init;
+		}
+		if (rules.end){
+			for (const rulend of rules.end){
+				end.push(rulend);
+			}
+			map.end = end;
+		}
+		if (rules.rule){
+
+			for (const target_rule of rules.rule){
+				for (const target of target_rule.target){
+					let list = map.rule.get(target);
+					if (list){
+						list.push({
+							after: target_rule.after,
+							before: target_rule.before,
+							replace: target_rule.replace,
+						})
+					} else {
+						list = [{
+							after: target_rule.after,
+							before: target_rule.before,
+							replace: target_rule.replace,
+						}]
+					}
+					map.rule.set(target, list);
 				}
+
 			}
 		}
-		return map;
 	}
 	return map;
 }
 
-async function build_file(folder: folder, rules: Map<string, _rule[]>){
+async function build_file(folder: folder, rules: Map<string, tar_rule[]>){
 	for (const file of folder.file!)
 	{
-		const path = `${name}/${file.name}`;
+		const path = `${folder.name}/${file.name}`;
 		const targetrules = rules.get(path);
 		//exec file.rule.before
 		if (targetrules)
@@ -116,9 +133,9 @@ async function build_file(folder: folder, rules: Map<string, _rule[]>){
 	}
 }
 
-async function build_folder(folder: folder, rules: Map<string, _rule[]>){
+async function build_folder(folder: folder, rules: _rule){
 	const name = folder.name;
-	const targetrules = rules.get(name);
+	const targetrules = rules.rule.get(name);
 	//exec folder.rule.before
 	if (targetrules){
 		for (const rule of targetrules){
@@ -166,16 +183,25 @@ async function build_folder(folder: folder, rules: Map<string, _rule[]>){
 			build_folder(fol, rules);
 	}
 	if (folder.file)
-		build_file(folder, rules)
+		build_file(folder, rules.rule)
 }
 
 async function main () {
 	const text = await open_file()	
 	const json: config = JSON.parse(text);
 	const rules = build_rule(json.rules)
+	if (rules.init)
+		for (const cmd of rules.init){
+			await exec_command(cmd);
+		}
 	for (const folder of json.folder){
 		build_folder(folder, rules);
 	}
+
+	if (rules.end)
+		for (const cmd of rules.end){
+			await exec_command(cmd);
+		}
 }
 
 main()
