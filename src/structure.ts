@@ -5,7 +5,6 @@ export interface file {
 
 export interface folder {
 	name:string
-	path: string,
 	file ?: file[]
 	folder ?: folder[],
 	from ?: string, // the imported files as susceptible to be overwrite by "file"

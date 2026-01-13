@@ -1,6 +1,7 @@
-import {folder, rule, _rule, tar_rule, config } from "./structure.ts"
+import {folder, file ,rule, _rule, tar_rule, config } from "./structure.ts"
+import { copy } from "https://deno.land/std@0.200.0/fs/copy.ts"
 
-const _VERSION = "0.1.7";
+const _VERSION = "0.1.8";
 
 async function exec_command(cmd:string) {
 	let command;
@@ -87,53 +88,50 @@ function build_rule(rules?: rule): _rule{
 	return map;
 }
 
-async function build_file(folder: folder, rules: Map<string, tar_rule[]>){
-	for (const file of folder.file!)
+async function build_file(ppath: string, file: file, rules: Map<string, tar_rule[]>){
+	const path = `${ppath}/${file.name}`;
+	const targetrules = rules.get(path);
+	//exec file.rule.before
+	if (targetrules)
 	{
-		const path = `${folder.name}/${file.name}`;
-		const targetrules = rules.get(path);
-		//exec file.rule.before
-		if (targetrules)
-		{
-			for (const rule of targetrules){
-				if (rule.before)
-					await exec_command(rule.before);
-			}
-		}
-		//replace cmd/create/copy file
-		if (targetrules)
-		{
 		for (const rule of targetrules){
-			if (rule.replace)
-				await exec_command(rule.replace);
-			}
-		} else if (file.from){
-			const fpath = `${file.from}/${file.name}`;
-			try {
-				await Deno.copyFile(fpath, path);
-				console.log(`File "${file.from}" copied to "${path}" successfully.`);
-			} catch (error) {
-				console.error(`Error copying file "${fpath}" to "${path}":`, error);
-			}   
-		} else { 
-			try {
-				await Deno.writeTextFile(path, "");
-						console.log(`File "${path}" created successfully.`);
-			} catch (error) {
-				console.error(`Error creating file "${name}":`, error);
-			}
+			if (rule.before)
+				await exec_command(rule.before);
 		}
-		//exec file.rule.after
-		if (targetrules){
-			for (const rule of targetrules){
-				if (rule.after)
-					await exec_command(rule.after);
-			}
+	}
+	//replace cmd/create/copy file
+	if (targetrules)
+	{
+	for (const rule of targetrules){
+		if (rule.replace)
+			await exec_command(rule.replace);
+		}
+	} else if (file.from){
+		const fpath = `${file.from}/${file.name}`;
+		try {
+			await Deno.copyFile(fpath, path);
+			console.log(`File "${file.from}" copied to "${path}" successfully.`);
+		} catch (error) {
+			console.error(`Error copying file "${fpath}" to "${path}":`, error);
+		}   
+	} else {
+		try {
+			await Deno.writeTextFile(path, "");
+					console.log(`File "${path}" created successfully.`);
+		} catch (error) {
+			console.error(`Error creating file "${file.name}":`, error);
+		}
+	}
+	//exec file.rule.after
+	if (targetrules){
+		for (const rule of targetrules){
+			if (rule.after)
+				await exec_command(rule.after);
 		}
 	}
 }
 
-async function build_folder(folder: folder, rules: _rule){
+async function build_folder(parent: string, folder: folder, rules: _rule){
 	const name = folder.name;
 	const targetrules = rules.rule.get(name);
 	//exec folder.rule.before
@@ -143,7 +141,7 @@ async function build_folder(folder: folder, rules: _rule){
 				await exec_command(rule.before);
 		}
 	}
-	const folderpath = `${folder.path}/${name}`
+	const folderpath = `${parent}/${name}`
 	//copy/create folder
 	if (targetrules){
 		for (const rule of targetrules){
@@ -151,13 +149,13 @@ async function build_folder(folder: folder, rules: _rule){
 				await exec_command(rule.replace);
 		}
 	} else if (folder.from){
-		const fpath = `${folder.from}/${name}`;
+		const cppath = `${parent}/${folder.name}`
 		try {
-			await Deno.copyFile(fpath, folderpath);
-			console.log(`File "${fpath}" copied to "${folderpath}" successfully.`);
+			await copy(folder.from, cppath);
+			console.log(`Folder "${folder.from}" copied to "${cppath}" successfully.`);
 		} catch (error) {
-			console.error(`Error copying file "${fpath}" to "${folderpath}":`, error);
-		}   
+			console.error(`Error copying folder "${folder.from}" to "${cppath}":`, error);
+		}
 	} else { 
 		try {
 			await Deno.mkdir(folderpath);
@@ -179,11 +177,16 @@ async function build_folder(folder: folder, rules: _rule){
 		}
 	}
 	if (folder.folder){
+		const path = `${parent}/${folder.name}`
 		for (const fol of folder.folder)
-			build_folder(fol, rules);
+			build_folder(path, fol, rules);
 	}
-	if (folder.file)
-		build_file(folder, rules.rule)
+	if (folder.file){
+		const path = `${parent}/${folder.name}`
+		for (const fil of folder.file){
+			build_file(path, fil, rules.rule)
+		}
+	}
 }
 
 async function main () {
@@ -195,7 +198,7 @@ async function main () {
 			await exec_command(cmd);
 		}
 	for (const folder of json.folder){
-		build_folder(folder, rules);
+		build_folder(".", folder, rules);
 	}
 
 	if (rules.end)

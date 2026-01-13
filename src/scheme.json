@@ -1,12 +1,10 @@
 {
     "folder": [
         {
-            "name": "utils",
-            "path": "."
+            "name": "utils"
         },
         {
             "name": "parsing",
-            "path": ".",
             "file":[
                 {
                     "name": "check.c"
@@ -15,7 +13,6 @@
         },
         {
             "name": "srcs",
-            "path": ".",
             "file":[
             {
                 "name": "psuh_swap.c"
@@ -28,7 +25,6 @@
         } ,
         {
             "name": "includes",
-            "path": ".",
             "file":[
                 {
                     "name":"push_swap.h"
@@ -39,7 +35,7 @@
 
     "rules" : {
         "init": ["git init"],
-        "end": ["git add .", "git status"],
+        "end": ["rm -f scheme.json", "git add .", "git status"],
         "rule": [
             {
                 "target": "chose",
